@@ -24,22 +24,22 @@ addpath Calculs
 %   Determine macro variables and apply macro BCs
 tic;
 % Physical parameters.
-L_p = 1; %1.1; % Cavity dimension. 
-U_p = 5; %1.1; % Cavity lid velocity.
-nu_p = 8e-4; % 1.586e-5; % Physical kinematic viscosity.
+L_p = 4; %1.1; % Cavity dimension. 
+U_p = 1.2/10; %1.1; % Cavity lid velocity.
+nu_p = 1.2e-3; % 1.586e-5; % Physical kinematic viscosity.
 rho0 = 1;
 
-D=0.2; % Diamètre du cylindre
+Diameter=0.1; % Diamètre du cylindre
 
 
 % Discrete/numerical parameters.
-nodes = 1500;
-dt =3e-4;
+nodes =600;
+dt = 0.0001;
 timesteps = 300000;
 nutilde0 = 1e-5; % initial nutilde value (should be non-zero for seeding).
 
 % Derived nondimensional parameters.
-Re = D * U_p / nu_p;
+Re = Diameter * U_p / nu_p;
 disp(['Reynolds number: ' num2str(Re)]);
 % Derived physical parameters.
 t_p = L_p / U_p;
@@ -55,7 +55,16 @@ disp(['Physical relaxation parameter: ' num2str(omega)]);
 u_lb = dt / dh;
 disp(['Lattice speed: ' num2str(u_lb)])
 
+% if dt> (dh^2/(10*nu_lb))
+%     error('dt> (dh^2/(10*nu_lb))');
+% end
+if nodes < Re/10
+    error('nodes < Re/10');
+end
 
+% if (tau<0.5 | tau>2)
+%     error('tau<0.5 | tau>2');
+% end
 % Determine macro variables and apply macro BCs
 % Initialize macro, then meso.
 rho = rho0*ones(nodes,nodes);
@@ -70,14 +79,14 @@ f = wall_bc(f,'north');
 f = wall_bc(f,'south');
 f = outlet_bc(f,'east');
 f = inlet_bc(f,u_lb,'west');
-[f,u,v] = cylinder_bc(f, D, u, v,nodes);
+[f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
 % Initialize turbulence stuff.
 d = compute_wall_distances(nodes);
 nutilde = nutilde0*ones(nodes,nodes);
 [omega, nut, nutilde] = update_nut(nutilde,nu_lb,dt,dh,d,u,v);
 
 uu_prev=zeros(nodes,nodes);
-
+%[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb);
 % Main loop.
 disp(['Running ' num2str(timesteps) ' timesteps...']);
 for iter = 1:timesteps
@@ -93,7 +102,7 @@ for iter = 1:timesteps
     f = wall_bc(f,'south');
     f = outlet_bc(f,'east');
     f = inlet_bc(f,u_lb,'west');
-    [f,u,v] = cylinder_bc(f, D, u, v,nodes);
+    [f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
     % Streaming.
     f = stream(f);
     
@@ -101,7 +110,7 @@ for iter = 1:timesteps
     f = wall_bc(f,'south');
     f = outlet_bc(f,'east');
     f = inlet_bc(f,u_lb,'west');
-    [f,u,v] = cylinder_bc(f, D, u, v,nodes);
+    [f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
     
     % Determine macro variables and apply macro BCs
     [u,v,rho] = reconstruct_macro_all(f);
@@ -118,8 +127,8 @@ for iter = 1:timesteps
     % Sortie à droite (Neumann)
     u(:,end) = u(:,end-1);  % Condition de sortie (extrapolation)
     v(:,end) = v(:,end-1);  % Condition de sortie (extrapolation)
-    [f,u,v] = cylinder_bc(f, D, u, v,nodes);
-    cylinder = create_circle_matrix(nodes,D);
+    [f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
+    cylinder = create_circle_matrix(nodes,Diameter);
     for i = 1:nodes
         for j = 1:nodes
             if cylinder(i,j) ==1
@@ -146,14 +155,14 @@ for iter = 1:timesteps
    epsilon = 1e-8;
    diff_max = max(max(100 * abs(uu_act - uu_prev) ./ (uu_prev + epsilon), [], 'omitnan'));
 
-   if diff_max<=0.5
+   if diff_max<=1
        break
    end
    uu_prev=uu_act;
 end
 
 w = vorticity(u, v, nodes);
-
+[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb);
 elapsedTime = toc;
 disp('Done!');
 fprintf('Temps d''exécution total : %.4f secondes\n', elapsedTime);

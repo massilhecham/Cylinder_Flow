@@ -15,17 +15,17 @@ function M = create_circle_matrix(n, D)
     r = sqrt((X - center).^2 + (Y - center).^2);
 
     % Tolérance pour identifier la bordure
-    tol = 1.5 / n;  
+    tol = .5 / n;  
 
     % Matrice de sortie
     M = zeros(n, n);
 
     % Marquer l'intérieur du cercle avec 2
-    M(r < radius) = 2;
+    M(r < radius) = 1;
 
     % Marquer la bordure du cercle avec 1
     M(abs(r - radius) < tol) = 1;
-end
+
 
 
 
