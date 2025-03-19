@@ -25,7 +25,7 @@ addpath Calculs
 tic;
 % Physical parameters.
 L_p = 4; %1.1; % Cavity dimension. 
-U_p = 1.2/10; %1.1; % Cavity lid velocity.
+U_p = 1.2; %1.1; % Cavity lid velocity.
 nu_p = 1.2e-3; % 1.586e-5; % Physical kinematic viscosity.
 rho0 = 1;
 
@@ -33,8 +33,8 @@ Diameter=0.1; % Diamètre du cylindre
 
 
 % Discrete/numerical parameters.
-nodes =600;
-dt = 0.0001;
+nodes =300;
+dt = 0.0005;
 timesteps = 300000;
 nutilde0 = 1e-5; % initial nutilde value (should be non-zero for seeding).
 
@@ -87,6 +87,8 @@ nutilde = nutilde0*ones(nodes,nodes);
 
 uu_prev=zeros(nodes,nodes);
 %[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb);
+
+
 % Main loop.
 disp(['Running ' num2str(timesteps) ' timesteps...']);
 for iter = 1:timesteps
@@ -127,11 +129,11 @@ for iter = 1:timesteps
     % Sortie à droite (Neumann)
     u(:,end) = u(:,end-1);  % Condition de sortie (extrapolation)
     v(:,end) = v(:,end-1);  % Condition de sortie (extrapolation)
-    [f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
+    %[f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
     cylinder = create_circle_matrix(nodes,Diameter);
     for i = 1:nodes
         for j = 1:nodes
-            if cylinder(i,j) ==1
+            if cylinder(i,j) == 1 || cylinder(i,j) == 2
                 u(i,j) = 0;
                 v(i,j) = 0;
             end
@@ -155,7 +157,7 @@ for iter = 1:timesteps
    epsilon = 1e-8;
    diff_max = max(max(100 * abs(uu_act - uu_prev) ./ (uu_prev + epsilon), [], 'omitnan'));
 
-   if diff_max<=1
+   if diff_max<= 0.25
        break
    end
    uu_prev=uu_act;

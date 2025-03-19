@@ -21,7 +21,7 @@ function M = create_circle_matrix(n, D)
     M = zeros(n, n);
 
     % Marquer l'intérieur du cercle avec 2
-    M(r < radius) = 1;
+    M(r < radius) = 2;
 
     % Marquer la bordure du cercle avec 1
     M(abs(r - radius) < tol) = 1;
