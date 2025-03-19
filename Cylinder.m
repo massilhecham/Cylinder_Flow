@@ -25,7 +25,7 @@ addpath Calculs
 tic;
 % Physical parameters.
 L_p = 4; %1.1; % Cavity dimension. 
-U_p = 1.2/10; %1.1; % Cavity lid velocity.
+U_p = 1.2; %1.1; % Cavity lid velocity.
 nu_p = 1.2e-3; % 1.586e-5; % Physical kinematic viscosity.
 rho0 = 1;
 
@@ -33,8 +33,8 @@ Diameter=0.1; % Diamètre du cylindre
 
 
 % Discrete/numerical parameters.
-nodes =600;
-dt = 0.0001;
+nodes =300;
+dt = 0.0005;
 timesteps = 300000;
 nutilde0 = 1e-5; % initial nutilde value (should be non-zero for seeding).
 
