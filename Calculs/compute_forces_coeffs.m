@@ -53,7 +53,9 @@ function [Force_Lift, Force_Drag, Coeff_L, Coeff_D] = compute_forces_coeffs(f, d
             if M(a,b)==1
                 for beta = 1:9
 
-                    % if beta == 0 ||  beta == 1 || beta == 2 || beta == 5 || beta == 6
+                    is_outward = check_outward_direction(M, a, b, c(beta,:));
+
+                     if is_outward == 1
 
                         if c(beta,:) == [0, 0]
     
@@ -62,7 +64,7 @@ function [Force_Lift, Force_Drag, Coeff_L, Coeff_D] = compute_forces_coeffs(f, d
                         else
                             
                             Force_Drag= Force_Drag+ (2 * c(beta,1) * f(a, b, beta))/norm(c(beta,:));
-                            
+
                         end
     
                         if c(beta,2) == [0, 0]
@@ -73,7 +75,7 @@ function [Force_Lift, Force_Drag, Coeff_L, Coeff_D] = compute_forces_coeffs(f, d
     
                             Force_Lift= Force_Lift+ (2 * c(beta,2) * f(a, b, beta))/norm(c(beta,:));
                         end
-                    % end
+                     end
                 end
             end
         end
