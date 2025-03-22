@@ -25,7 +25,7 @@ addpath Calculs
 tic;
 % Physical parameters.
 L_p = 4; %1.1; % Cavity dimension. 
-U_p = 1.2; %1.1; % Cavity lid velocity.
+U_p = 1*1.2; %1.1; % Cavity lid velocity.
 nu_p = 1.2e-3; % 1.586e-5; % Physical kinematic viscosity.
 rho0 = 1;
 
@@ -33,8 +33,8 @@ Diameter=0.1; % Diamètre du cylindre
 
 
 % Discrete/numerical parameters.
-nodes =300;
-dt = 0.0005;
+nodes =250;
+dt = 0.00025;
 timesteps = 300000;
 nutilde0 = 1e-5; % initial nutilde value (should be non-zero for seeding).
 
@@ -55,16 +55,7 @@ disp(['Physical relaxation parameter: ' num2str(omega)]);
 u_lb = dt / dh;
 disp(['Lattice speed: ' num2str(u_lb)])
 
-% if dt> (dh^2/(10*nu_lb))
-%     error('dt> (dh^2/(10*nu_lb))');
-% end
-if nodes < Re/10
-    error('nodes < Re/10');
-end
 
-% if (tau<0.5 | tau>2)
-%     error('tau<0.5 | tau>2');
-% end
 % Determine macro variables and apply macro BCs
 % Initialize macro, then meso.
 rho = rho0*ones(nodes,nodes);
@@ -79,7 +70,7 @@ f = wall_bc(f,'north');
 f = wall_bc(f,'south');
 f = outlet_bc(f,'east');
 f = inlet_bc(f,u_lb,'west');
-[f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
+f = cylinder_bc(f, Diameter,nodes);
 % Initialize turbulence stuff.
 d = compute_wall_distances(nodes);
 nutilde = nutilde0*ones(nodes,nodes);
@@ -104,7 +95,7 @@ for iter = 1:timesteps
     f = wall_bc(f,'south');
     f = outlet_bc(f,'east');
     f = inlet_bc(f,u_lb,'west');
-    [f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
+    f = cylinder_bc(f, Diameter, nodes);
     % Streaming.
     f = stream(f);
     
@@ -112,7 +103,7 @@ for iter = 1:timesteps
     f = wall_bc(f,'south');
     f = outlet_bc(f,'east');
     f = inlet_bc(f,u_lb,'west');
-    [f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
+    f = cylinder_bc(f, Diameter,nodes);
     
     % Determine macro variables and apply macro BCs
     [u,v,rho] = reconstruct_macro_all(f);
@@ -125,11 +116,10 @@ for iter = 1:timesteps
     % Entrée à gauche
     u(2:end-1,1) = u_lb; % u_lb à l'entrée sauf aux coins
     v(2:end-1,1) = 0;    % Pas de composante verticale à l'entrée
-    f = outlet_bc(f,'east');
+    %f = outlet_bc(f,'east');
     % Sortie à droite (Neumann)
     u(:,end) = u(:,end-1);  % Condition de sortie (extrapolation)
     v(:,end) = v(:,end-1);  % Condition de sortie (extrapolation)
-    %[f,u,v] = cylinder_bc(f, Diameter, u, v,nodes);
     cylinder = create_circle_matrix(nodes,Diameter);
     for i = 1:nodes
         for j = 1:nodes
@@ -146,7 +136,8 @@ for iter = 1:timesteps
     % Modified from Jonas Latt's cavity code on the Palabos website.
     if (mod(iter,10)==0)
         uu = sqrt(u.^2+v.^2) / u_lb;
-         imagesc(flipud(uu));
+         imagesc(uu);
+
 %        imagesc(flipud(nut));
 %         imagesc(flipud(omega));
         colorbar
@@ -164,7 +155,11 @@ for iter = 1:timesteps
 end
 
 w = vorticity(u, v, nodes);
-[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb);
+[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb,u,v);
 elapsedTime = toc;
 disp('Done!');
 fprintf('Temps d''exécution total : %.4f secondes\n', elapsedTime);
+
+
+
+
