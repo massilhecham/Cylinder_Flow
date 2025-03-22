@@ -1,4 +1,4 @@
-function [Force_Lift, Force_Drag, Coeff_L, Coeff_D] = compute_forces_coeffs(f, dt, nodes, D, rho, U,u,v)
+function [Force_Lift, Force_Drag, Coeff_L, Coeff_D] = compute_forces_coeffs(f, dt, nodes, D, rho, U)
     % Calcule les forces et coefficients aérodynamiques sur un cylindre centré
     % Implémente la méthode d'échange de quantité de mouvement (Momentum Exchange Method)
 

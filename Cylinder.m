@@ -155,7 +155,7 @@ for iter = 1:timesteps
 end
 
 w = vorticity(u, v, nodes);
-[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb,u,v);
+[F_L, F_D, C_L, C_D] = compute_forces_coeffs(f, dt, nodes,Diameter, rho0, u_lb);
 elapsedTime = toc;
 disp('Done!');
 fprintf('Temps d''exécution total : %.4f secondes\n', elapsedTime);
