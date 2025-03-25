@@ -1,75 +1,147 @@
-function [Force_Lift, Force_Drag, Coeff_L, Coeff_D] = compute_forces_coeffs(f, dt, nodes, D, rho, U)
-    % Calcule les forces et coefficients aérodynamiques sur un cylindre centré
-    % Implémente la méthode d'échange de quantité de mouvement (Momentum Exchange Method)
+function Coeffs = compute_forces_coeffs(f, dt, nodes, D, rho, U_p, config, gap_ratio)
+% Initialisation des forces
+Force_Drag_1 = 0;
+Force_Lift_1 = 0;
+Force_Drag_2 = 0;
+Force_Lift_2 = 0;
+Force_Drag_3 = 0;
+Force_Lift_3 = 0;
 
-    % Taille de grille
-    dx = 1 / (nodes - 1); % Espacement du maillage
 
-    % Vérification du facteur d'échelle
-    scaling_factor = dx^2 / dt;
-    if scaling_factor > 1e6  % Seuil arbitraire à ajuster
-        warning('Le facteur de mise à l’échelle est très grand, vérifiez dx et dt.');
-    end
+% Écart horizontal/vertical entre les noeuds
+dx = 1/(nodes-1);
 
-    % Directions discrètes (vecteurs de vitesse) pour D2Q9
-    c = [
-        0,  0;  % Stationnaire
-        1,  0;  % Droite
-        0,  1;  % Haut
-       -1,  0;  % Gauche
-        0, -1;  % Bas
-        1,  1;  % Diagonale haut-droite
-       -1,  1;  % Diagonale haut-gauche
-       -1, -1;  % Diagonale bas-gauche
-        1, -1   % Diagonale bas-droite
+
+
+% Directions discrètes (vecteurs de vitesse) pour D2Q9
+c = [
+    0, 0;   % Stationnaire
+    1, 0;   % Droite
+    0, 1;   % Haut
+    -1, 0;  % Gauche
+    0, -1;  % Bas
+    1, 1;   % Diagonale haut-droite
+    -1, 1;  % Diagonale haut-gauche
+    -1, -1; % Diagonale bas-gauche
+    1, -1   % Diagonale bas-droite
     ];
 
-    % Générer la matrice du cylindre
-    M = create_circle_matrix(nodes, D);
+% Correspondance des directions opposées en D2Q9
+opposite_direction = [1, 4, 5, 2, 3, 8, 9, 6, 7];
 
-    % Initialisation des forces
-    Force_Lift = 0;
-    Force_Drag = 0;
+% Créer la matrice des cylindres
+cylinder = create_3_cylinders_matrix(nodes, D, config, gap_ratio);
 
-    % Parcourir les noeuds pour calculer les forces
-    for a = 2:nodes-1
-        for b = 2:nodes-1
-            if M(a, b) == 1  % Bordure du cylindre
+% Parcourir les nœuds pour calculer les forces sur chaque cylindre
+for i = 1:nodes
+    for j = 1:nodes
+        if cylinder(i, j) == 1
+            for beta = 2:9
+                is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
 
-                for beta = 2:9
-                    is_outward = check_outward_direction(M, a, b, c(beta,:));
-
-                    if is_outward == 0
-
-                        % Correspondance des directions opposées en D2Q9
-                        opposite_direction = [1, 4, 5, 2, 3, 8, 9, 6, 7];
+                if is_outward == 0
+                    % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
+                    if norm(c(beta, :)) ~= 0
                         opposite_beta = opposite_direction(beta);
 
                         % Calcul des distributions incidentes et rebondies
-                        momentum_incident_D = f(a, b, beta)*c(beta, 1);      % Distribution incidente
-                        momentum_rebound_D = f(a, b, opposite_beta)*c(opposite_beta, 1);  % Distribution après rebond
+                        momentum_incident_D_1 = f(i, j, beta) * c(beta, 1);  % Distribution incidente
+                        momentum_rebound_D_1 = f(i, j, opposite_beta) * c(opposite_beta, 1);  % Distribution après rebond
 
-                        momentum_incident_L = f(a, b, beta)*c(beta, 2);      % Distribution incidente
-                        momentum_rebound_L = f(a, b, opposite_beta)*c(opposite_beta, 2);  % Distribution après rebond
+                        momentum_incident_L_1 = f(i, j, beta) * c(beta, 2);  % Distribution incidente
+                        momentum_rebound_L_1 = f(i, j, opposite_beta) * c(opposite_beta, 2);  % Distribution après rebond
 
                         % Échange de quantité de mouvement
-                        delta_momentum_D = (momentum_rebound_D - momentum_incident_D)/norm(c(beta,:));
-                        delta_momentum_L = (momentum_rebound_L - momentum_incident_L)/norm(c(beta,:));
-                        % Calcul des composantes de force
-                        Force_Drag = Force_Drag + delta_momentum_D ;
-                        Force_Lift = Force_Lift + delta_momentum_L ;
+                        delta_momentum_D_1 = (momentum_rebound_D_1 - momentum_incident_D_1) / norm(c(beta, :));
+                        delta_momentum_L_1 = (momentum_rebound_L_1 - momentum_incident_L_1) / norm(c(beta, :));
+
+                        % Calcul des composantes de force pour le cylindre concerné
+                        Force_Drag_1 = Force_Drag_1 + delta_momentum_D_1;
+                        Force_Lift_1 = Force_Lift_1 + delta_momentum_L_1;
+
+                    end
+                end
+            end
+        end
+       if cylinder(i, j) == 2
+            for beta = 2:9
+                is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
+
+                if is_outward == 0
+                    % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
+                    if norm(c(beta, :)) ~= 0
+                        opposite_beta = opposite_direction(beta);
+
+                        % Calcul des distributions incidentes et rebondies
+                        momentum_incident_D_2 = f(i, j, beta) * c(beta, 1);  % Distribution incidente
+                        momentum_rebound_D_2 = f(i, j, opposite_beta) * c(opposite_beta, 1);  % Distribution après rebond
+
+                        momentum_incident_L_2 = f(i, j, beta) * c(beta, 2);  % Distribution incidente
+                        momentum_rebound_L_2 = f(i, j, opposite_beta) * c(opposite_beta, 2);  % Distribution après rebond
+
+                        % Échange de quantité de mouvement
+                        delta_momentum_D_2 = (momentum_rebound_D_2 - momentum_incident_D_2) / norm(c(beta, :));
+                        delta_momentum_L_2 = (momentum_rebound_L_2 - momentum_incident_L_2) / norm(c(beta, :));
+
+                        % Calcul des composantes de force pour le cylindre concerné
+                        Force_Drag_2 = Force_Drag_2 + delta_momentum_D_2;
+                        Force_Lift_2 = Force_Lift_2 + delta_momentum_L_2;
+
+                    end
+                end
+            end
+       end
+       if cylinder(i, j) == 3
+            for beta = 2:9
+                is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
+
+                if is_outward == 0
+                    % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
+                    if norm(c(beta, :)) ~= 0
+                        opposite_beta = opposite_direction(beta);
+
+                        % Calcul des distributions incidentes et rebondies
+                        momentum_incident_D_3 = f(i, j, beta) * c(beta, 1);  % Distribution incidente
+                        momentum_rebound_D_3 = f(i, j, opposite_beta) * c(opposite_beta, 1);  % Distribution après rebond
+
+                        momentum_incident_L_3 = f(i, j, beta) * c(beta, 2);  % Distribution incidente
+                        momentum_rebound_L_3 = f(i, j, opposite_beta) * c(opposite_beta, 2);  % Distribution après rebond
+
+                        % Échange de quantité de mouvement
+                        delta_momentum_D_3 = (momentum_rebound_D_3 - momentum_incident_D_3) / norm(c(beta, :));
+                        delta_momentum_L_3 = (momentum_rebound_L_3 - momentum_incident_L_3) / norm(c(beta, :));
+
+                        % Calcul des composantes de force pour le cylindre concerné
+                        Force_Drag_3 = Force_Drag_3 + delta_momentum_D_3;
+                        Force_Lift_3 = Force_Lift_3 + delta_momentum_L_3;
 
                     end
                 end
             end
         end
     end
-
-    % Mise à l'échelle des forces
-    Force_Drag = Force_Drag * (dx^2 / dt);
-    Force_Lift = Force_Lift * (dx^2 / dt);
-
-    % Calcul des coefficients aérodynamiques
-    Coeff_D = Force_Drag / (0.5 * rho * (U^2) * D);
-    Coeff_L = Force_Lift / (0.5 * rho * (U^2) * D);
 end
+
+% Mise à l'échelle des forces
+Force_Drag_1 = Force_Drag_1 * (dx^2 / dt);
+Force_Lift_1 = Force_Lift_1 * (dx^2 / dt);
+Force_Drag_2 = Force_Drag_2 * (dx^2 / dt);
+Force_Lift_2 = Force_Lift_2 * (dx^2 / dt);
+Force_Drag_3 = Force_Drag_3 * (dx^2 / dt);
+Force_Lift_3 = Force_Lift_3 * (dx^2 / dt);
+
+% Calcul des coefficients aérodynamiques pour chaque cylindre
+
+CD_1 = Force_Drag_1/(0.5*rho*(U_p^2)*D);
+CL_1 = Force_Lift_1/(0.5*rho*(U_p^2)*D);
+CD_2 = Force_Drag_2/(0.5*rho*(U_p^2)*D);
+CL_2 = Force_Lift_2/(0.5*rho*(U_p^2)*D);
+CD_3 = Force_Drag_3/(0.5*rho*(U_p^2)*D);
+CL_3 = Force_Lift_3/(0.5*rho*(U_p^2)*D);
+
+Coeffs = [CD_1,CL_1;
+          CD_2,CL_2;
+          CD_3,CL_3];
+
+end
+
