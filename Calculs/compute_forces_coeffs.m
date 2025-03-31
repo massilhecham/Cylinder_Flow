@@ -1,4 +1,4 @@
-function Coeffs = compute_forces_coeffs(f, dt, nodes, D, rho, U_p, config, gap_ratio)
+function Coeffs = compute_forces_coeffs(f, dt, nodes, D, rho, U_p, u_lb, config, gap_ratio)
 % Initialisation des forces
 Force_Drag_1 = 0;
 Force_Lift_1 = 0;
@@ -39,7 +39,7 @@ for i = 1:nodes
             for beta = 2:9
                 is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
 
-                if is_outward == 0
+                if is_outward == 1
                     % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
                     if norm(c(beta, :)) ~= 0
                         opposite_beta = opposite_direction(beta);
@@ -67,7 +67,7 @@ for i = 1:nodes
             for beta = 2:9
                 is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
 
-                if is_outward == 0
+                if is_outward == 1
                     % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
                     if norm(c(beta, :)) ~= 0
                         opposite_beta = opposite_direction(beta);
@@ -95,7 +95,7 @@ for i = 1:nodes
             for beta = 2:9
                 is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
 
-                if is_outward == 0
+                if is_outward == 1
                     % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
                     if norm(c(beta, :)) ~= 0
                         opposite_beta = opposite_direction(beta);
@@ -132,12 +132,12 @@ Force_Lift_3 = Force_Lift_3 * (dx^2 / dt);
 
 % Calcul des coefficients aérodynamiques pour chaque cylindre
 
-CD_1 = Force_Drag_1/(0.5*rho*(U_p^2)*D);
-CL_1 = Force_Lift_1/(0.5*rho*(U_p^2)*D);
-CD_2 = Force_Drag_2/(0.5*rho*(U_p^2)*D);
-CL_2 = Force_Lift_2/(0.5*rho*(U_p^2)*D);
-CD_3 = Force_Drag_3/(0.5*rho*(U_p^2)*D);
-CL_3 = Force_Lift_3/(0.5*rho*(U_p^2)*D);
+CD_1 = Force_Drag_1/(0.5*rho*((u_lb)^2)*(D/dx));
+CL_1 = Force_Lift_1/(0.5*rho*((u_lb)^2)*(D/dx));
+CD_2 = Force_Drag_2/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
+CL_2 = Force_Lift_2/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
+CD_3 = Force_Drag_3/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
+CL_3 = Force_Lift_3/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
 
 Coeffs = [CD_1,CL_1;
           CD_2,CL_2;

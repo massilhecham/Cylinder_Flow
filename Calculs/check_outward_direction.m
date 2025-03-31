@@ -21,9 +21,9 @@ function is_outward = check_outward_direction(M, i, j, vitesse, D, gap_ratio, co
         
         case 'triangle'  % Triangle équilatéral pointant vers la gauche
             h = sqrt(3) * D / 2;  % Hauteur du triangle
-            centers = [0.5 - gap, 0.5;
-                       0.5 + (gap / 2), 0.5 - (h / 2);
-                       0.5 + (gap / 2), 0.5 + (h / 2)];
+            centers = [0.5 - gap / 2, 0.5;
+                       0.5 + (gap / 2), 0.5 + h;
+                       0.5 + (gap / 2), 0.5 - h];
         
         otherwise
             error('Configuration non reconnue. Choisissez "single", "tandem", "side_by_side" ou "triangle".');
