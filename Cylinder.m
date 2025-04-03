@@ -1,7 +1,7 @@
 % UNDER CONSTRUCTION
 
 % A Lattice Boltzmann (single relaxation time) D2Q9 solver,
-% with the Spalart Allmaras turbulence model, on a lid-driven cavity.
+% with the Spalart Allmaras turbulence model
 % Cell centers (nodes) are placed on the boundaries.
 % Author: Robert Lee
 % Email: rlee32@gatech.edu
@@ -29,20 +29,20 @@ addpath Calculs
 tic;
 % Paramètres d'entrée.
 
-U_p =0.1; %1.1; % Cavity lid velocity.
-nu_p = 0.00015143; % 1.586e-5; % Physical kinematic viscosity.
+U_p =0.005485; %1.1; % Cavity lid velocity.
+nu_p = 1.202e-5; % 1.586e-5; % Physical kinematic viscosity.
 rho0 = 1;
-Diameter=0.1514; % Diamètre du cylindre
+Diameter=0.2191; % Diamètre du cylindre
 gap_ratio = 1.5; % Espacement relatif des cylindres
 config  = 'tandem';   % Configurations:
-                        % 'single' (1 cylindre);
-                        % 'tandem' (3 cylindres alignés horizontalement);
-                        % 'side by side' (3 cylindres alignés verticalement);
-                        % 'triangle' (3 cylindres formant un triangle équilatéral face à l'écoulement);
+% 'single' (1 cylindre);
+% 'tandem' (3 cylindres alignés horizontalement);
+% 'side by side' (3 cylindres alignés verticalement);
+% 'triangle' (3 cylindres formant un triangle équilatéral face à l'écoulement);
 
-nodes = 575;  % maillage du domaine (nodes x nodes)
-dt = 0.00170368; % Pas de temps
-timesteps = 300000; % nombres d'itérations sur le pas de temps
+nodes = 475;  % maillage du domaine (nodes x nodes)
+dt = 0.025; % Pas de temps
+timesteps = 150000; % nombres d'itérations sur le pas de temps
 err = 0.0; % condition d'arrêt sur la boucle (écart relatif sur l'amplitude de la vitesse)
 
 nutilde0 = 1e-5; % initial nutilde value (should be non-zero for seeding).
@@ -130,7 +130,7 @@ for iter = 1:timesteps
     end
 
     % Collision.
-    f = collide_sa(f, u, v, rho, omega);
+    f = collide_sa(f, u, v, rho, omega); %collision
 
     % Apply meso BCs.
     f = wall_bc(f,'north');
@@ -182,20 +182,53 @@ for iter = 1:timesteps
 
 
     Coeffs = compute_forces_coeffs(f, dt, nodes, Diameter, rho0,U_p, u_lb, config, gap_ratio);
-        time = [time, iter];
-        CD_1_vals = [CD_1_vals, Coeffs(1, 1)];
-        CL_1_vals = [CL_1_vals, Coeffs(1, 2)];
-        CD_2_vals = [CD_2_vals, Coeffs(2, 1)];
-        CL_2_vals = [CL_2_vals, Coeffs(2, 2)];
-        CD_3_vals = [CD_3_vals, Coeffs(3, 1)];
-        CL_3_vals = [CL_3_vals, Coeffs(3, 2)];
+    time = [time, iter*dt*U_p/Diameter;];
+    CD_1_vals = [CD_1_vals, Coeffs(1, 1)];
+    CL_1_vals = [CL_1_vals, Coeffs(1, 2)];
+    CD_2_vals = [CD_2_vals, Coeffs(2, 1)];
+    CL_2_vals = [CL_2_vals, Coeffs(2, 2)];
+    CD_3_vals = [CD_3_vals, Coeffs(3, 1)];
+    CL_3_vals = [CL_3_vals, Coeffs(3, 2)];
 
     % VISUALIZATION
     % Modified from Jonas Latt's cavity code on the Palabos website.
     if (mod(iter, 10) == 0)
+
+        
+
+        % Figure pour CD
+        figure(1);
+        clf;
+        hold on;
+        plot(time, CD_1_vals, 'r-', 'DisplayName', 'CD_1');
+        plot(time, CD_2_vals, 'g-', 'DisplayName', 'CD_2');
+        plot(time, CD_3_vals, 'b-', 'DisplayName', 'CD_3');
+        xlabel("tU / D");
+        ylabel('Coefficienst de traînée (CD)');
+        legend;
+        title(sprintf("Coefficients de traînée en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio));
+        hold off;
+        drawnow;
+
+        % Figure pour CL
+        figure(2);
+        clf;
+        hold on;
+        plot(time, CL_1_vals, 'r-', 'DisplayName', 'CL_1');
+        plot(time, CL_2_vals, 'g-', 'DisplayName', 'CL_2');
+        plot(time, CL_3_vals, 'b-', 'DisplayName', 'CL_3');
+        xlabel("tU / D");
+        ylabel('Coefficients de portance (CL)');
+        legend;
+        title(sprintf("Coefficients de portance en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio));
+        hold off;
+        drawnow;
+
+
         uu = sqrt(u.^2 + v.^2) / u_lb;
 
         uu(cylinder ~= 0) = NaN;
+        figure(3);
         imagesc(uu);
 
         colorbar;
@@ -232,7 +265,7 @@ for iter = 1:timesteps
                 % Centres des trois cylindres pour former un triangle équilatéral pointant vers la gauche
                 x_cyl = [xc - gap/2 , xc + gap/2, xc + gap/2];  % Coordonnée x des 3 cylindres
                 y_cyl = [yc , yc + h, yc - h];  % Coordonnée y des 3 cylindres
-                
+
             otherwise
                 error('Configuration non reconnue.');
         end
@@ -247,11 +280,11 @@ for iter = 1:timesteps
 
 
 
-        
-   
+
+
     end
 
-    
+
 
     uu = sqrt(u.^2+v.^2) / u_lb;
     uu_act= uu;
@@ -266,7 +299,7 @@ for iter = 1:timesteps
 
 end
 
-time = time*dt*U_p/Diameter;
+
 
 % % Affichage du graphique des coefficients
 % figure(2);
@@ -286,33 +319,7 @@ time = time*dt*U_p/Diameter;
 
 
 
-% Figure pour CD
-figure(2);
-clf;
-hold on;
-plot(time, CD_1_vals, 'r-', 'DisplayName', 'CD_1');
-plot(time, CD_2_vals, 'g-', 'DisplayName', 'CD_2');
-plot(time, CD_3_vals, 'b-', 'DisplayName', 'CD_3');
-xlabel("tU / D");
-ylabel('Coefficienst de traînée (CD)');
-legend;
-title(sprintf("Coefficients de traînée en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio));
-hold off;
-drawnow;
 
-% Figure pour CL
-figure(3);
-clf;
-hold on;
-plot(time, CL_1_vals, 'r-', 'DisplayName', 'CL_1');
-plot(time, CL_2_vals, 'g-', 'DisplayName', 'CL_2');
-plot(time, CL_3_vals, 'b-', 'DisplayName', 'CL_3');
-xlabel("tU / D");
-ylabel('Coefficients de portance (CL)');
-legend;
-title(sprintf("Coefficients de portance en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio));
-hold off;
-drawnow;
 
 pente = diff(CL_1_vals) ./ diff(time*dt);
 regression = polyfit(time(500:end)*dt,CL_1_vals(500:end),1);

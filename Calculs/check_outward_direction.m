@@ -26,7 +26,7 @@ function is_outward = check_outward_direction(M, i, j, vitesse, D, gap_ratio, co
                        0.5 + (gap / 2), 0.5 - h];
         
         otherwise
-            error('Configuration non reconnue. Choisissez "single", "tandem", "side_by_side" ou "triangle".');
+            error('Configuration non reconnue. Choisissez "single", "tandem", "side by side" ou "triangle".');
     end
 
     % Convertir les centres en indices de la grille
