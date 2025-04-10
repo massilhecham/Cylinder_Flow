@@ -45,7 +45,7 @@ function is_outward = check_outward_direction(M, i, j, vitesse, D, gap_ratio, co
     center_y = centers(idx, 2);
     
     % Calcul de la normale extérieure
-    normal = [i - center_y, j - center_x];
+   normal = [j - center_x, i - center_y];
     
     % Normalisation du vecteur normal
     normal = normal / norm(normal);

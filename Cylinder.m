@@ -29,10 +29,10 @@ addpath Calculs
 tic;
 % Paramètres d'entrée.
 
-U_p =0.005485; %1.1; % Cavity lid velocity.
-nu_p = 1.202e-5; % 1.586e-5; % Physical kinematic viscosity.
+U_p =0.01225; %1.1; % Cavity lid velocity.
+nu_p = 9.1875e-6; % 1.586e-5; % Physical kinematic viscosity.
 rho0 = 1;
-Diameter=0.2191; % Diamètre du cylindre
+Diameter=0.075; % Diamètre du cylindre
 gap_ratio = 1.5; % Espacement relatif des cylindres
 config  = 'tandem';   % Configurations:
 % 'single' (1 cylindre);
@@ -40,9 +40,9 @@ config  = 'tandem';   % Configurations:
 % 'side by side' (3 cylindres alignés verticalement);
 % 'triangle' (3 cylindres formant un triangle équilatéral face à l'écoulement);
 
-nodes = 475;  % maillage du domaine (nodes x nodes)
-dt = 0.025; % Pas de temps
-timesteps = 150000; % nombres d'itérations sur le pas de temps
+nodes = 1143;  % maillage du domaine (nodes x nodes)
+dt = 0.005; % Pas de temps
+timesteps = 400000; % nombres d'itérations sur le pas de temps
 err = 0.0; % condition d'arrêt sur la boucle (écart relatif sur l'amplitude de la vitesse)
 
 nutilde0 = 1e-5; % initial nutilde value (should be non-zero for seeding).
@@ -121,6 +121,7 @@ CL_2_vals = [];
 CD_3_vals = [];
 CL_3_vals = [];
 
+cylinder = create_3_cylinders_matrix(nodes,Diameter,config,gap_ratio);
 
 % Main loop.
 disp(['Running ' num2str(timesteps) ' timesteps...']);
@@ -165,8 +166,6 @@ for iter = 1:timesteps
 
 
 
-    cylinder = create_3_cylinders_matrix(nodes,Diameter,config,gap_ratio);
-
 
 
     for i = 1:nodes
@@ -181,7 +180,7 @@ for iter = 1:timesteps
     [omega, nut, nutilde] = update_nut(nutilde,nu_lb,dt,dh,d,u,v);
 
 
-    Coeffs = compute_forces_coeffs(f, dt, nodes, Diameter, rho0,U_p, u_lb, config, gap_ratio);
+    Coeffs = compute_forces_coeffs(f, nodes, Diameter, rho0, u_lb, config, gap_ratio);
     time = [time, iter*dt*U_p/Diameter;];
     CD_1_vals = [CD_1_vals, Coeffs(1, 1)];
     CL_1_vals = [CL_1_vals, Coeffs(1, 2)];
@@ -204,7 +203,8 @@ for iter = 1:timesteps
         plot(time, CD_2_vals, 'g-', 'DisplayName', 'CD_2');
         plot(time, CD_3_vals, 'b-', 'DisplayName', 'CD_3');
         xlabel("tU / D");
-        ylabel('Coefficienst de traînée (CD)');
+        ylabel('Coefficients de traînée (CD)');
+       % ylim([-5e-3 5e-3]);  % Limite de l'axe y
         legend;
         title(sprintf("Coefficients de traînée en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio));
         hold off;
@@ -219,6 +219,7 @@ for iter = 1:timesteps
         plot(time, CL_3_vals, 'b-', 'DisplayName', 'CL_3');
         xlabel("tU / D");
         ylabel('Coefficients de portance (CL)');
+       % ylim([-2e-3 2e-3]);  % Limite de l'axe y
         legend;
         title(sprintf("Coefficients de portance en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio));
         hold off;

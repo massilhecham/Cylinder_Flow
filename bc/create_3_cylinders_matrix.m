@@ -46,7 +46,7 @@ function M = create_3_cylinders_matrix(n, D, config, gap_ratio)
                        0.5 + gap / 2, 0.5 - h ];            % Troisième cylindre en bas à droite
 
         otherwise
-            error('Configuration non reconnue. Choisissez "single", "tandem", "side_by_side" ou "triangle".');
+            error('Configuration non reconnue. Choisissez "single", "tandem", "side by side" ou "triangle".');
     end
 
     % Trier les centres des cylindres d'abord par leur coordonnée x (de gauche à droite)

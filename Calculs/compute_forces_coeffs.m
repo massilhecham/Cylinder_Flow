@@ -1,4 +1,4 @@
-function Coeffs = compute_forces_coeffs(f, dt, nodes, D, rho, U_p, u_lb, config, gap_ratio)
+function Coeffs = compute_forces_coeffs(f, nodes, D, rho, u_lb, config, gap_ratio)
 % Initialisation des forces
 Force_Drag_1 = 0;
 Force_Lift_1 = 0;
@@ -37,85 +37,64 @@ for i = 1:nodes
     for j = 1:nodes
         if cylinder(i, j) == 1
             for beta = 2:9
-                is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
+                opposite_beta = opposite_direction(beta);
 
-                if is_outward == 1
-                    % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
-                    if norm(c(beta, :)) ~= 0
-                        opposite_beta = opposite_direction(beta);
+                ni = i + c(beta,2);
+                nj = j + c(beta,1);
 
-                        % Calcul des distributions incidentes et rebondies
-                        momentum_incident_D_1 = f(i, j, beta) * c(beta, 1);  % Distribution incidente
-                        momentum_rebound_D_1 = f(i, j, opposite_beta) * c(opposite_beta, 1);  % Distribution après rebond
+                % Calcul des distributions incidentes et rebondies
+                if cylinder(ni,nj) == 0
 
-                        momentum_incident_L_1 = f(i, j, beta) * c(beta, 2);  % Distribution incidente
-                        momentum_rebound_L_1 = f(i, j, opposite_beta) * c(opposite_beta, 2);  % Distribution après rebond
+                    momentum_incident_1 = f(ni, nj, opposite_beta);
+                    momentum_rebound_1 = f(i, j, beta);
+                    % Échange de quantité de mouvement
 
-                        % Échange de quantité de mouvement
-                        delta_momentum_D_1 = (momentum_rebound_D_1 - momentum_incident_D_1) / norm(c(beta, :));
-                        delta_momentum_L_1 = (momentum_rebound_L_1 - momentum_incident_L_1) / norm(c(beta, :));
-
-                        % Calcul des composantes de force pour le cylindre concerné
-                        Force_Drag_1 = Force_Drag_1 + delta_momentum_D_1;
-                        Force_Lift_1 = Force_Lift_1 + delta_momentum_L_1;
-
-                    end
+                    delta_momentum_1 = momentum_rebound_1 - momentum_incident_1;
+                    % Calcul des composantes de force pour le cylindre concerné
+                    Force_Drag_1 = Force_Drag_1 + delta_momentum_1*c(beta,1);
+                    Force_Lift_1 = Force_Lift_1 + delta_momentum_1*c(beta,2);
                 end
             end
         end
-       if cylinder(i, j) == 2
+        if cylinder(i, j) == 2
             for beta = 2:9
-                is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
 
-                if is_outward == 1
-                    % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
-                    if norm(c(beta, :)) ~= 0
-                        opposite_beta = opposite_direction(beta);
+                opposite_beta = opposite_direction(beta);
 
-                        % Calcul des distributions incidentes et rebondies
-                        momentum_incident_D_2 = f(i, j, beta) * c(beta, 1);  % Distribution incidente
-                        momentum_rebound_D_2 = f(i, j, opposite_beta) * c(opposite_beta, 1);  % Distribution après rebond
+                ni = i + c(beta,2);
+                nj = j + c(beta,1);
+                if cylinder(ni,nj) == 0
+                    % Calcul des distributions incidentes et rebondies
 
-                        momentum_incident_L_2 = f(i, j, beta) * c(beta, 2);  % Distribution incidente
-                        momentum_rebound_L_2 = f(i, j, opposite_beta) * c(opposite_beta, 2);  % Distribution après rebond
+                    momentum_incident_2 = f(ni,nj,opposite_beta);
+                    momentum_rebound_2 = f(i,j,beta);
 
-                        % Échange de quantité de mouvement
-                        delta_momentum_D_2 = (momentum_rebound_D_2 - momentum_incident_D_2) / norm(c(beta, :));
-                        delta_momentum_L_2 = (momentum_rebound_L_2 - momentum_incident_L_2) / norm(c(beta, :));
+                    % Échange de quantité de mouvement
+                    delta_momentum_2 = momentum_rebound_2 - momentum_incident_2;
+                    % Calcul des composantes de force pour le cylindre concerné
+                    Force_Drag_2 = Force_Drag_2 + delta_momentum_2 * c(beta,1);
+                    Force_Lift_2 = Force_Lift_2 + delta_momentum_2 * c(beta,2);
 
-                        % Calcul des composantes de force pour le cylindre concerné
-                        Force_Drag_2 = Force_Drag_2 + delta_momentum_D_2;
-                        Force_Lift_2 = Force_Lift_2 + delta_momentum_L_2;
-
-                    end
                 end
             end
-       end
-       if cylinder(i, j) == 3
+        end
+        if cylinder(i, j) == 3
             for beta = 2:9
-                is_outward = check_outward_direction(cylinder, i, j, c(beta, :),D,gap_ratio,config);
+                opposite_beta = opposite_direction(beta);
 
-                if is_outward == 1
-                    % Vérifier que la norme n'est pas nulle pour éviter la division par zéro
-                    if norm(c(beta, :)) ~= 0
-                        opposite_beta = opposite_direction(beta);
+                ni = i + c(beta,2);
+                nj = j + c(beta,1);
+                if cylinder(ni,nj) == 0
+                    % Calcul des distributions incidentes et rebondies
 
-                        % Calcul des distributions incidentes et rebondies
-                        momentum_incident_D_3 = f(i, j, beta) * c(beta, 1);  % Distribution incidente
-                        momentum_rebound_D_3 = f(i, j, opposite_beta) * c(opposite_beta, 1);  % Distribution après rebond
+                    momentum_incident_3 = f(ni,nj,opposite_beta);
+                    momentum_rebound_3 = f(i,j,beta);
 
-                        momentum_incident_L_3 = f(i, j, beta) * c(beta, 2);  % Distribution incidente
-                        momentum_rebound_L_3 = f(i, j, opposite_beta) * c(opposite_beta, 2);  % Distribution après rebond
-
-                        % Échange de quantité de mouvement
-                        delta_momentum_D_3 = (momentum_rebound_D_3 - momentum_incident_D_3) / norm(c(beta, :));
-                        delta_momentum_L_3 = (momentum_rebound_L_3 - momentum_incident_L_3) / norm(c(beta, :));
-
-                        % Calcul des composantes de force pour le cylindre concerné
-                        Force_Drag_3 = Force_Drag_3 + delta_momentum_D_3;
-                        Force_Lift_3 = Force_Lift_3 + delta_momentum_L_3;
-
-                    end
+                    % Échange de quantité de mouvement
+                    delta_momentum_3 = momentum_rebound_3 - momentum_incident_3;
+                    % Calcul des composantes de force pour le cylindre concerné
+                    Force_Drag_3 = Force_Drag_3 + delta_momentum_3 * c(beta,1);
+                    Force_Lift_3 = Force_Lift_3 + delta_momentum_3 * c(beta,2);
                 end
             end
         end
@@ -123,21 +102,15 @@ for i = 1:nodes
 end
 
 % Mise à l'échelle des forces
-Force_Drag_1 = Force_Drag_1 * (dx^2 / dt);
-Force_Lift_1 = Force_Lift_1 * (dx^2 / dt);
-Force_Drag_2 = Force_Drag_2 * (dx^2 / dt);
-Force_Lift_2 = Force_Lift_2 * (dx^2 / dt);
-Force_Drag_3 = Force_Drag_3 * (dx^2 / dt);
-Force_Lift_3 = Force_Lift_3 * (dx^2 / dt);
 
 % Calcul des coefficients aérodynamiques pour chaque cylindre
 
 CD_1 = Force_Drag_1/(0.5*rho*((u_lb)^2)*(D/dx));
 CL_1 = Force_Lift_1/(0.5*rho*((u_lb)^2)*(D/dx));
-CD_2 = Force_Drag_2/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
-CL_2 = Force_Lift_2/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
-CD_3 = Force_Drag_3/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
-CL_3 = Force_Lift_3/(0.5*rho*((u_lb)^2)*(D/dx)); %((U_p/u_lb)^2)*(D*dx)) avant! multiplier par (u_lb^4)/((U_p*dx)^2)
+CD_2 = Force_Drag_2/(0.5*rho*((u_lb)^2)*(D/dx));
+CL_2 = Force_Lift_2/(0.5*rho*((u_lb)^2)*(D/dx));
+CD_3 = Force_Drag_3/(0.5*rho*((u_lb)^2)*(D/dx));
+CL_3 = Force_Lift_3/(0.5*rho*((u_lb)^2)*(D/dx));
 
 Coeffs = [CD_1,CL_1;
           CD_2,CL_2;
