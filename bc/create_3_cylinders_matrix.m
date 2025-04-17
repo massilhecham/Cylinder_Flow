@@ -1,84 +1,83 @@
 function M = create_3_cylinders_matrix(n, D, config, gap_ratio)
-    % Crée une matrice nxn avec différentes configurations de cylindres.
-    % Bord du cylindre = 1, 2 ou 3 selon le cylindre, intérieur du cylindre = 4, extérieur = 0.
-    %
-    % Paramètres :
-    % n : taille de la matrice (nxn)
-    % D : diamètre des cylindres
-    % config : type de configuration ('single', 'tandem', 'side_by_side', 'triangle')
-    % gap_ratio : facteur de séparation entre les cylindres (ex: 1.5 signifie un espace de 0.5D)
+% Crée une matrice nxn représentant un domaine contenant 1 ou 3 cylindres.
+% - M(i,j) = 0 : extérieur
+% - M(i,j) = 1, 2, 3 : bord des cylindres (numérotés de gauche à droite)
+% - M(i,j) = 4 : intérieur d’un cylindre
+%
+% Entrées :
+%   n         : taille du maillage (n x n)
+%   D         : diamètre d’un cylindre (en unité normalisée)
+%   config    : configuration des cylindres ('single', 'tandem', 'side by side', 'triangle', 'etage')
+%   gap_ratio : espacement entre les centres des cylindres en multiple de D
 
-    % Rayon du cylindre
-    radius = D / 2;
-    
-    % Espacement entre les cylindres
-    gap = gap_ratio * D;
-    
-    % Coordonnées normalisées [0,1]
-    [X, Y] = meshgrid(linspace(0, 1, n), linspace(0, 1, n));
+% Rayon du cylindre
+radius = D / 2;
 
-    % Matrice de sortie
-    M = zeros(n, n);
-    
-    % Tolérance pour identifier le bord
-    tol = 1 / n;
+% Espacement entre les centres
+gap = gap_ratio * D;
 
-    % Définition des centres des cylindres en fonction de la configuration
-    switch config
-        case 'single'
-            centers = [0.5, 0.5];
+% Grille de coordonnées normalisées (entre 0 et 1)
+[X, Y] = meshgrid(linspace(0, 1, n), linspace(0, 1, n));
 
-        case 'tandem'  % 3 cylindres alignés horizontalement
-            centers = [0.5 - gap, 0.5;
-                       0.5, 0.5;
-                       0.5 + gap, 0.5];
+% Matrice résultat
+M = zeros(n, n);
 
-        case 'side by side'  % 3 cylindres alignés verticalement
-            centers = [0.5, 0.5 - gap;
-                       0.5, 0.5;
-                       0.5, 0.5 + gap];
+% Tolérance pour déterminer le bord
+tol = 1 / n;
 
-        case 'triangle'  % Triangle équilatéral pointant vers la gauche (inlet)
-            h = sqrt(3) * D / 2;  % Hauteur du triangle équilatéral
-            % Centres des trois cylindres pour former un triangle équilatéral pointant vers la gauche
-            centers = [0.5 - gap / 2, 0.5;                     % Premier cylindre à la pointe du triangle (à gauche)
-                       0.5 + gap / 2, 0.5 + h ;             % Deuxième cylindre en haut à droite
-                       0.5 + gap / 2, 0.5 - h ];            % Troisième cylindre en bas à droite
+% Définir les centres des cylindres selon la configuration choisie
+switch config
+    case 'single'
+        centers = [0.5, 0.5];
 
-        otherwise
-            error('Configuration non reconnue. Choisissez "single", "tandem", "side by side" ou "triangle".');
-    end
+    case 'tandem'
+        centers = [0.5 - gap, 0.5;
+                   0.5,      0.5;
+                   0.5 + gap, 0.5];
 
-    % Trier les centres des cylindres d'abord par leur coordonnée x (de gauche à droite)
-    % En cas d'égalité, trier par la coordonnée y (de haut en bas)
-    [~, idx] = sortrows(centers, [1, 2]);  % Trier d'abord par x, puis par y
-    centers = centers(idx, :);
+    case 'side by side'
+        centers = [0.5, 0.5 - gap;
+                   0.5, 0.5;
+                   0.5, 0.5 + gap];
 
-    % Numérotation des cylindres de gauche à droite, puis de haut en bas
-    cyl_num = 1;  % Compteur pour la numérotation des cylindres
-    for k = 1:size(centers, 1)
-        cx = centers(k, 1);
-        cy = centers(k, 2);
+    case 'triangle'
+        h = sqrt(3) * D / 2;
+        centers = [0.5 - gap/2, 0.5;
+                   0.5 + gap/2, 0.5 + h;
+                   0.5 + gap/2, 0.5 - h];
 
-        % Parcours de la matrice pour définir les bords et l'intérieur des cylindres
-        for i = 1:n
-            for j = 1:n
-                % Calculer la distance par rapport au centre du cylindre
-                dist = sqrt((X(i, j) - cx)^2 + (Y(i, j) - cy)^2);
+    case 'etage'
+        L = gap_ratio * D;
+        d = L / sqrt(2);
+        centers = [0.5 + d, 0.5 - d;
+                   0.5,     0.5;
+                   0.5 - d, 0.5 + d];
 
-                % Assigner les valeurs aux cellules en fonction de la distance
-                if dist <= radius + tol && dist > radius  % Bord du cylindre
-                    M(i, j) = cyl_num;  % Bord du cylindre selon l'ordre de numérotation
-                elseif dist <= radius  % Intérieur du cylindre
-                    M(i, j) = 4;  % Intérieur du cylindre
-                end
-            end
-        end
-
-        % Incrémenter le compteur de numérotation
-        cyl_num = cyl_num + 1;
-    end
+    otherwise
+        error('Configuration non reconnue. Choisissez "single", "tandem", "side by side", "triangle" ou "etage".');
 end
 
+% Trier les centres de gauche à droite, puis de haut en bas
+[~, idx] = sortrows(centers, [1, 2]);
+centers = centers(idx, :);
 
+% Boucle sur chaque cylindre
+for k = 1:size(centers, 1)
+    cx = centers(k, 1);
+    cy = centers(k, 2);
 
+    % Boucle sur chaque point du domaine
+    for i = 1:n
+        for j = 1:n
+            % Distance entre le point (i,j) et le centre (cx, cy)
+            dist = sqrt((X(i, j) - cx)^2 + (Y(i, j) - cy)^2);
+
+            if dist <= radius + tol && dist > radius
+                M(i, j) = k;  % Bord du cylindre
+            elseif dist <= radius
+                M(i, j) = 4;  % Intérieur du cylindre
+            end
+        end
+    end
+end
+end
