@@ -76,8 +76,8 @@ for iter = 1:timesteps
     f = collide_sa(f, u, v, rho, omega);
 
     % Conditions aux limites (pré-streaming)
-    f = moving_wall_bc(f, 'north', u_lb);
-    f = moving_wall_bc(f, 'south', u_lb);
+    f = wall_bc(f, 'north');
+    f = wall_bc(f, 'south');
     f = outlet_bc(f, 'east');
     f = inlet_bc(f, u_lb, 'west');
     f = cylinder_bc(f, Diameter, nodes, config, gap_ratio);
@@ -86,8 +86,8 @@ for iter = 1:timesteps
     f = stream(f);
 
     % Conditions aux limites (post-streaming)
-    f = moving_wall_bc(f, 'north', u_lb);
-    f = moving_wall_bc(f, 'south', u_lb);
+    f = wall_bc(f, 'north');
+    f = wall_bc(f, 'south');
     f = outlet_bc(f, 'east');
     f = inlet_bc(f, u_lb, 'west');
     f = cylinder_bc(f, Diameter, nodes, config, gap_ratio);
@@ -96,9 +96,9 @@ for iter = 1:timesteps
     [u, v, rho] = reconstruct_macro_all(f);
 
     % Imposition des conditions sur les parois et l'entrée/sortie
-    u([1 end], :) = u_lb;
+    u([1 end], :) = 0;
     v([1 end], :) = 0;
-    u(2:end-1,1) = u_lb; v(2:end-1,1) = 0;
+    u(2:end-1,1) = 0; v(2:end-1,1) = 0;
     u(:, end) = u(:, end-1); v(:, end) = v(:, end-1);
     u(cylinder ~= 0) = 0; v(cylinder ~= 0) = 0;
 
