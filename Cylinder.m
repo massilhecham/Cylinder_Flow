@@ -22,7 +22,7 @@ dh = 1/(nodes-1);              % Espacement entre les nœuds
 % === PARAMÈTRES DÉRIVÉS ===
 Re = Diameter * U_p / nu_p;
 disp(['Reynolds number: ' num2str(Re)]);
-t_p = Diameter / U_p;
+u_lb = U_p * dt / dh;
 disp(['Lattice speed: ' num2str(u_lb)]);
 nu_lb = nu_p * dt / dh^2;
 disp(['Lattice viscosity: ' num2str(nu_lb)]);
@@ -119,22 +119,26 @@ for iter = 1:timesteps
     if mod(iter, 10) == 0
         % Graphiques des coefficients
         figure(1); clf;
-        plot(time, CD_1_vals, 'r', time, CD_2_vals, 'g', time, CD_3_vals, 'b');
+        plot(time, CD_1_vals, 'r-', time, CD_2_vals, 'g-', time, CD_3_vals, 'b-');
         xlabel("tU / D"); ylabel("CD"); legend("CD_1", "CD_2", "CD_3");
-        title(sprintf("Traînée - Re = %.0f, config = %s", Re, config));
+        title(sprintf("Coefficients de traînée en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio0));
         drawnow;
 
         figure(2); clf;
-        plot(time, CL_1_vals, 'r--', time, CL_2_vals, 'g--', time, CL_3_vals, 'b--');
+        plot(time, CL_1_vals, 'r--', time, CL_2_vals, 'g-', time, CL_3_vals, 'b-');
         xlabel("tU / D"); ylabel("CL"); legend("CL_1", "CL_2", "CL_3");
-        title(sprintf("Portance - Re = %.0f, config = %s", Re, config));
+        title(sprintf("Coefficients de portnance en fonction du temps \n avec Re = %.0f, configuration %s, gap ratio = %.1f", Re, config, gap_ratio0));
         drawnow;
 
         % Affichage du champ de vitesse normalisé
         uu = sqrt(u.^2 + v.^2) / u_lb;
         uu(cylinder ~= 0) = NaN;
         figure(3); clf; imagesc(uu); colorbar; axis equal off;
-        title("Champ de vitesse u/u_{lb}"); drawnow;
+        cb = colorbar;        % Ajoute le colorbar
+        % Titre et labels des axes
+        title(sprintf('Module de vitesse avec Re = %.0f, configuration %s, gap ratio = %.1f', Re, config, gap_ratio0));
+        ylabel(cb, 'u / u_{lb}'); 
+        drawnow;
     end
 
     % Vérification de la convergence
