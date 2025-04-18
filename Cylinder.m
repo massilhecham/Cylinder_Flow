@@ -45,14 +45,14 @@ u(end, 2:end-1) = u_lb;
 f = compute_feq(rho, u, v);
 
 % Conditions aux limites initiales
-f = wall_bc(f, 'north');
-f = wall_bc(f, 'south');
+f = moving_wall_bc(f, 'north');
+f = moving_wall_bc(f, 'south');
 f = inlet_bc(f, u_lb, 'west');
 f = outlet_bc(f, 'east');
 f = cylinder_bc(f, Diameter, nodes, config, gap_ratio);
 
 % Turbulence : distance aux murs et champ initial
-d = compute_wall_distances(nodes);
+d = compute_moving_wall_distances(nodes);
 nutilde = nutilde0 * ones(nodes, nodes);
 [omega, nut, nutilde] = update_nut(nutilde, nu_lb, dt, dh, d, u, v);
 
@@ -76,8 +76,8 @@ for iter = 1:timesteps
     f = collide_sa(f, u, v, rho, omega);
 
     % Conditions aux limites (pré-streaming)
-    f = wall_bc(f, 'north');
-    f = wall_bc(f, 'south');
+    f = moving_wall_bc(f, 'north');
+    f = moving_wall_bc(f, 'south');
     f = outlet_bc(f, 'east');
     f = inlet_bc(f, u_lb, 'west');
     f = cylinder_bc(f, Diameter, nodes, config, gap_ratio);
@@ -86,8 +86,8 @@ for iter = 1:timesteps
     f = stream(f);
 
     % Conditions aux limites (post-streaming)
-    f = wall_bc(f, 'north');
-    f = wall_bc(f, 'south');
+    f = moving_wall_bc(f, 'north');
+    f = moving_wall_bc(f, 'south');
     f = outlet_bc(f, 'east');
     f = inlet_bc(f, u_lb, 'west');
     f = cylinder_bc(f, Diameter, nodes, config, gap_ratio);
@@ -98,7 +98,7 @@ for iter = 1:timesteps
     % Imposition des conditions sur les parois et l'entrée/sortie
     u([1 end], :) = 0;
     v([1 end], :) = 0;
-    u(2:end-1,1) = 0; v(2:end-1,1) = 0;
+    u(2:end-1,1) = u_lb; v(2:end-1,1) = 0;
     u(:, end) = u(:, end-1); v(:, end) = v(:, end-1);
     u(cylinder ~= 0) = 0; v(cylinder ~= 0) = 0;
 
